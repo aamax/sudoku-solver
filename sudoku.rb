@@ -95,10 +95,9 @@ class SudokuSet
   def valid?
     temp_array = []
     @values.each do |v|
-      next if v == 0      
+      next if v.value == 0      
       
-      if temp_array.include? v.value
-        
+      if temp_array.include? v.value        
         return false
       end
       temp_array << v.value
@@ -203,13 +202,13 @@ describe SudokuBoard do
       (0..8).each do |x|
         setup_array = []
         (0..8).each do |n|
-          setup_array << (n + 1)
+          setup_array << 0
         end
         @master_array << setup_array
       end
     end
     
-    it "should have valid rows when no duplicates" do      
+    it "should have valid rows when empty board" do      
       @game.setup(@master_array)
       
       @game.rows.each do |r|
@@ -223,8 +222,9 @@ describe SudokuBoard do
       end
     end
     
-    it "should indicate invalid if there are duplicates in rows, columns, or boxes" do
+    it "should be invalid if dupes in row 0 for row 0 and box 0. columns all valid" do
       @master_array[0][0] = 9
+      @master_array[0][1] = 9
       
       @game.setup(@master_array)
       
@@ -233,15 +233,52 @@ describe SudokuBoard do
         r.valid?.should == false if idx == 0
       end
       @game.columns.each_with_index do |c, idx|
-        c.valid?.should == true unless idx == 0
-        c.valid?.should == false if idx == 0
+        c.valid?.should == true 
       end
       @game.boxes.each_with_index do |b, idx|
         b.valid?.should == true unless idx == 0
         b.valid?.should == false if idx == 0
-      end
-      
+      end      
     end
+    
+    it "should be invalid if dupes in row 4 for row 4 and box 3. columns all valid" do
+      @master_array[4][0] = 9
+      @master_array[4][1] = 9
+      
+      @game.setup(@master_array)
+      
+      @game.rows.each_with_index do |r, idx|
+        r.valid?.should == true unless idx == 4
+        r.valid?.should == false if idx == 4
+      end
+      @game.columns.each_with_index do |c, idx|
+        c.valid?.should == true 
+      end
+      @game.boxes.each_with_index do |b, idx|
+        b.valid?.should == true unless idx == 3
+        b.valid?.should == false if idx == 3
+      end      
+    end
+    
+    it "should be invalid if dupes in row 8 for row 8 and box 6. columns all valid" do
+      @master_array[8][0] = 9
+      @master_array[8][1] = 9
+      
+      @game.setup(@master_array)
+      
+      @game.rows.each_with_index do |r, idx|
+        r.valid?.should == true unless idx == 8
+        r.valid?.should == false if idx == 8
+      end
+      @game.columns.each_with_index do |c, idx|
+        c.valid?.should == true 
+      end
+      @game.boxes.each_with_index do |b, idx|
+        b.valid?.should == true unless idx == 6
+        b.valid?.should == false if idx == 6
+      end      
+    end
+
  
     it "cells should know possible legal values" do
       
