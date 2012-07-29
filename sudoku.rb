@@ -1,18 +1,45 @@
 class SudokuBoard
-  attr_accessor :cells
+  attr_accessor :cells, :rows, :columns, :boxes
   
   def initialize
     @cells = []
-    81.times do
-      @cells << Cell.new
-    end
+    @rows = [[]]    
+    @boxes = [[]]
+    @columns = [[]]
+    row_idx = 0
+    col_idx = 0
+    box_idx = 0
     
+    (0..80).each do |idx|
+      new_cell = Cell.new
+      @cells << new_cell
+      
+      if @rows[row_idx].length == 9
+        @rows << []
+        row_idx += 1        
+      end
+      @rows[row_idx] << new_cell
+      
+      if @columns[col_idx].length == 9
+        @columns << []
+        col_idx += 1        
+      end
+      @columns[col_idx] << new_cell
+      
+      if @boxes[box_idx].length == 9
+        @boxes << []
+        box_idx += 1        
+      end
+      @boxes[box_idx] << new_cell
+    end    
   end
 end
 
 class Cell
   
 end
+
+
 
 describe SudokuBoard do
   before :each do
