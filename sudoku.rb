@@ -62,6 +62,25 @@ describe SudokuBoard do
     it "should contain 9 boxes" do
       @game.boxes.length.should == 9
     end
+    
+    it "should properly initialize" do
+      
+      master_array = []
+      (1..9).each do |x|
+        setup_array = []
+        (1..9).each do |n|
+          setup_array << n
+        end
+        master_array << setup_array
+      end
+      
+      @game.setup(master_array)
+      (1..9).each do |row|
+        (1..9).each do |col|
+          @game.cell.value.should == col
+        end
+      end
+    end
   end
   
   
