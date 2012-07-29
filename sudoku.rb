@@ -27,8 +27,10 @@ class SudokuBoard
         col_idx = 0       
       end
       @rows[row_idx].add new_cell
-      @columns[col_idx].add new_cell
+      new_cell.row = @rows[row_idx]
       
+      @columns[col_idx].add new_cell
+      new_cell.column = @columns[col_idx]
       col_idx += 1
     end
     
@@ -41,12 +43,15 @@ class SudokuBoard
         
         (0..2).each do |n|
           @boxes[box_number].add @cells[top + n]
+          @cells[top + n].box = @boxes[box_number]
         end
         (0..2).each do |n|
           @boxes[box_number].add @cells[middle + n]
+          @cells[middle + n].box = @boxes[box_number]
         end  
         (0..2).each do |n|    
-          @boxes[box_number].add @cells[bottom + n]          
+          @boxes[box_number].add @cells[bottom + n]  
+          @cells[bottom + n].box = @boxes[box_number]        
         end
       end          
     end
@@ -65,15 +70,51 @@ class SudokuBoard
       c.value = 0
     end
   end
+
+  def valid?
+    @rows.each do |r|
+      unless r.valid?
+        return false
+      end
+    end
+    
+    @columns.each do |c|
+      unless c.valid?
+        return false
+      end
+    end
+    
+    @boxes.each do |b|
+      unless b.valid?
+        return false
+      end
+    end
+    true
+  end  
+  
+  def update_values
+    # iterate all cells
+    @cells.each do |c|
+      # clear possibles for cell
+      
+      # test row
+      # test column
+      # test box
+    end
+  end
 end
 
 class Cell
-  attr_accessor :value, :possibles
+  attr_accessor :value, :possibles, :row, :box, :column
   
   def initialize(value)
     @value = value
     @possibles = []
+    @roll = nil
+    @column = nil
+    @box = nil
   end
+  
   
 end
 
@@ -192,6 +233,33 @@ describe SudokuBoard do
           end
         end
       end
+    
+      it "cells should know what row they are in" do
+        @game.cells.each_with_index do |cell, index|
+          row = index / 9
+          cell.row.should == @game.rows[row]
+        end
+      end
+      
+      it "cells should know what column they are in" do
+        @game.cells.each_with_index do |cell, index|
+          column = index % 9
+          cell.column.should == @game.columns[column]
+        end
+      end
+      
+      it "cells should know what box they are in" do
+        @game.cells.each_with_index do |cell, index|
+          box = 0
+          row = index / 9
+          column = index % 9
+          box = 3 if row > 2 
+          box = 6 if row > 5 
+          box += 1 if column > 2
+          box += 1 if column > 5
+          cell.box.should == @game.boxes[box]
+        end
+      end
     end
   end
   
@@ -207,7 +275,7 @@ describe SudokuBoard do
       end
     end
     
-    it "should have valid rows when empty board" do      
+    it "should have valid rows, columns and boxes when empty board" do      
       @game.setup(@master_array)
       
       @game.rows.each do |r|
@@ -219,6 +287,7 @@ describe SudokuBoard do
       @game.boxes.each do |b|
         b.valid?.should == true
       end
+      @game.valid?.should == true
     end
     
     context "check rows and boxes" do
@@ -238,7 +307,8 @@ describe SudokuBoard do
         @game.boxes.each_with_index do |b, idx|
           b.valid?.should == true unless idx == 0
           b.valid?.should == false if idx == 0
-        end      
+        end    
+        @game.valid?.should == false  
       end
     
       it "should be invalid if dupes in row 4 for row 4 and box 3. columns all valid" do
@@ -258,6 +328,7 @@ describe SudokuBoard do
           b.valid?.should == true unless idx == 3
           b.valid?.should == false if idx == 3
         end      
+        @game.valid?.should == false  
       end
     
       it "should be invalid if dupes in row 8 for row 8 and box 6. columns all valid" do
@@ -276,7 +347,8 @@ describe SudokuBoard do
         @game.boxes.each_with_index do |b, idx|
           b.valid?.should == true unless idx == 6
           b.valid?.should == false if idx == 6
-        end      
+        end  
+        @game.valid?.should == false      
       end
       
       it "should be invalid if dupes in row 0 for row 0 and box 0. columns all valid" do
@@ -295,7 +367,8 @@ describe SudokuBoard do
         @game.boxes.each_with_index do |b, idx|
           b.valid?.should == true unless idx == 1
           b.valid?.should == false if idx == 1
-        end      
+        end   
+        @game.valid?.should == false     
       end
       
       it "should be invalid if dupes in row 4 for row 4 and box 3. columns all valid" do
@@ -314,7 +387,8 @@ describe SudokuBoard do
         @game.boxes.each_with_index do |b, idx|
           b.valid?.should == true unless idx == 4
           b.valid?.should == false if idx == 4
-        end      
+        end   
+        @game.valid?.should == false     
       end
       
       it "should be invalid if dupes in row 8 for row 8 and box 6. columns all valid" do
@@ -333,7 +407,8 @@ describe SudokuBoard do
         @game.boxes.each_with_index do |b, idx|
           b.valid?.should == true unless idx == 7
           b.valid?.should == false if idx == 7
-        end      
+        end 
+        @game.valid?.should == false       
       end
     
       it "should be invalid if dupes in row 0 for row 0 and box 0. columns all valid" do
@@ -352,7 +427,8 @@ describe SudokuBoard do
         @game.boxes.each_with_index do |b, idx|
           b.valid?.should == true unless idx == 2
           b.valid?.should == false if idx == 2
-        end      
+        end 
+        @game.valid?.should == false       
       end
     
       it "should be invalid if dupes in row 4 for row 4 and box 3. columns all valid" do
@@ -371,7 +447,8 @@ describe SudokuBoard do
         @game.boxes.each_with_index do |b, idx|
           b.valid?.should == true unless idx == 5
           b.valid?.should == false if idx == 5
-        end      
+        end 
+        @game.valid?.should == false       
       end
     end
       
@@ -393,7 +470,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 0
             b.valid?.should == false if idx == 0
-          end      
+          end     
+          @game.valid?.should == false   
         end
       
         it "should be invalid if dupes in column 1 for column 1 and box 0. row all valid" do
@@ -412,7 +490,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 0
             b.valid?.should == false if idx == 0
-          end      
+          end   
+          @game.valid?.should == false     
         end
       
         it "should be invalid if dupes in column 2 for column 2 and box 0. row all valid" do
@@ -431,7 +510,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 0
             b.valid?.should == false if idx == 0
-          end      
+          end  
+          @game.valid?.should == false      
         end
     
         it "should be invalid if dupes in column 3 for column 3 and box 1. row all valid" do
@@ -450,7 +530,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 1
             b.valid?.should == false if idx == 1
-          end      
+          end  
+          @game.valid?.should == false      
         end
       
         it "should be invalid if dupes in column 4 for column 4 and box 1. row all valid" do
@@ -469,7 +550,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 1
             b.valid?.should == false if idx == 1
-          end      
+          end  
+          @game.valid?.should == false      
         end
       
         it "should be invalid if dupes in column 5 for column 5 and box 1. row all valid" do
@@ -488,7 +570,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 1
             b.valid?.should == false if idx == 1
-          end      
+          end 
+          @game.valid?.should == false       
         end
 
         it "should be invalid if dupes in column 6 for column 6 and box 2. row all valid" do
@@ -507,7 +590,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 2
             b.valid?.should == false if idx == 2
-          end      
+          end   
+          @game.valid?.should == false     
         end
       
         it "should be invalid if dupes in column 7 for column 7 and box 2. row all valid" do
@@ -526,7 +610,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 2
             b.valid?.should == false if idx == 2
-          end      
+          end   
+          @game.valid?.should == false     
         end
       
         it "should be invalid if dupes in column 8 for column 8 and box 2. row all valid" do
@@ -545,7 +630,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 2
             b.valid?.should == false if idx == 2
-          end      
+          end  
+          @game.valid?.should == false      
         end
       end
 
@@ -567,6 +653,7 @@ describe SudokuBoard do
             b.valid?.should == true unless idx == 3
             b.valid?.should == false if idx == 3
           end      
+          @game.valid?.should == false  
         end
       
         it "should be invalid if dupes in column 1 for column 1 and box 3. row all valid" do
@@ -585,7 +672,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 3
             b.valid?.should == false if idx == 3
-          end      
+          end   
+          @game.valid?.should == false     
         end
       
         it "should be invalid if dupes in column 2 for column 2 and box 3. row all valid" do
@@ -604,7 +692,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 3
             b.valid?.should == false if idx == 3
-          end      
+          end  
+          @game.valid?.should == false      
         end
     
         it "should be invalid if dupes in column 3 for column 3 and box 4. row all valid" do
@@ -623,7 +712,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 4
             b.valid?.should == false if idx == 4
-          end      
+          end  
+          @game.valid?.should == false      
         end
       
         it "should be invalid if dupes in column 4 for column 4 and box 4. row all valid" do
@@ -642,7 +732,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 4
             b.valid?.should == false if idx == 4
-          end      
+          end   
+          @game.valid?.should == false     
         end
       
         it "should be invalid if dupes in column 5 for column 5 and box 4. row all valid" do
@@ -661,7 +752,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 4
             b.valid?.should == false if idx == 4
-          end      
+          end   
+          @game.valid?.should == false     
         end
 
         it "should be invalid if dupes in column 6 for column 6 and box 5. row all valid" do
@@ -680,7 +772,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 5
             b.valid?.should == false if idx == 5
-          end      
+          end 
+          @game.valid?.should == false       
         end
       
         it "should be invalid if dupes in column 7 for column 7 and box 5. row all valid" do
@@ -699,7 +792,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 5
             b.valid?.should == false if idx == 5
-          end      
+          end   
+          @game.valid?.should == false     
         end
       
         it "should be invalid if dupes in column 8 for column 8 and box 5. row all valid" do
@@ -718,7 +812,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 5
             b.valid?.should == false if idx == 5
-          end      
+          end  
+          @game.valid?.should == false      
         end
       end
      
@@ -740,6 +835,7 @@ describe SudokuBoard do
             b.valid?.should == true unless idx == 6
             b.valid?.should == false if idx == 6
           end      
+          @game.valid?.should == false  
         end
       
         it "should be invalid if dupes in column 1 for column 1 and box 6. row all valid" do
@@ -759,6 +855,7 @@ describe SudokuBoard do
             b.valid?.should == true unless idx == 6
             b.valid?.should == false if idx == 6
           end      
+          @game.valid?.should == false  
         end
       
         it "should be invalid if dupes in column 2 for column 2 and box 6. row all valid" do
@@ -777,7 +874,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 6
             b.valid?.should == false if idx == 6
-          end      
+          end   
+          @game.valid?.should == false     
         end
     
         it "should be invalid if dupes in column 3 for column 3 and box 7. row all valid" do
@@ -796,7 +894,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 7
             b.valid?.should == false if idx == 7
-          end      
+          end   
+          @game.valid?.should == false     
         end
       
         it "should be invalid if dupes in column 4 for column 4 and box 7. row all valid" do
@@ -815,7 +914,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 7
             b.valid?.should == false if idx == 7
-          end      
+          end    
+          @game.valid?.should == false    
         end
       
         it "should be invalid if dupes in column 5 for column 5 and box 7. row all valid" do
@@ -834,7 +934,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 7
             b.valid?.should == false if idx == 7
-          end      
+          end  
+          @game.valid?.should == false      
         end
 
         it "should be invalid if dupes in column 6 for column 6 and box 8. row all valid" do
@@ -853,7 +954,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 8
             b.valid?.should == false if idx == 8
-          end      
+          end  
+          @game.valid?.should == false      
         end
       
         it "should be invalid if dupes in column 7 for column 7 and box 8. row all valid" do
@@ -872,7 +974,8 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 8
             b.valid?.should == false if idx == 8
-          end      
+          end  
+          @game.valid?.should == false      
         end
       
         it "should be invalid if dupes in column 8 for column 8 and box 8. row all valid" do
@@ -891,10 +994,22 @@ describe SudokuBoard do
           @game.boxes.each_with_index do |b, idx|
             b.valid?.should == true unless idx == 8
             b.valid?.should == false if idx == 8
-          end      
+          end   
+          @game.valid?.should == false     
         end
       end
 
     end
+  
+    
+  end
+
+  context "solve the board" do
+    it "should show all possabilities for a cell with no neighbors" #do
+    #   @game.update_values
+    #   @game.cells.each do |c|
+    #     c.possables.should == [1,2,3,4,5,6,7,8,9]
+    #   end
+    # end
   end
 end
