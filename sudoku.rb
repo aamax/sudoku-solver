@@ -32,27 +32,38 @@ class SudokuBoard
       col_idx += 1
     end
     
-    # @boxes.each_with_index |b, idx|
-    #       b_idx = 0
-    #       (0..2).each do |n|
-    #         b[b_idx] = @rows[n].values[n]
-    #       end
-    #     end    
+    (0..2).each do |col|          
+      (0..2).each do |row|
+        box_number = row * 3 + col            
+        top = (3 * col) + (27 * row)
+        middle = 9 + top
+        bottom = 18 + top
+        
+        (0..2).each do |n|
+          @boxes[box_number].add @cells[top + n]
+        end
+        (0..2).each do |n|
+          @boxes[box_number].add @cells[middle + n]
+        end  
+        (0..2).each do |n|    
+          @boxes[box_number].add @cells[bottom + n]          
+        end
+      end          
+    end
   end
   
-  def setup(setup_array)
-    
-    binding.pry
-    
-    
+  def setup(setup_array) 
     (0..8).each do |n|
-      (0..8).each do |c|
+      (0..8).each do |c|        
         @cells[n * 9 + c].value = setup_array[n][c]
       end
     end
-    
-    binding.pry
-    
+  end
+
+  def clear
+    @cells.each do |c|
+      c.value = 0
+    end
   end
 end
 
@@ -84,6 +95,8 @@ class SudokuSet
   def valid?
     temp_array = []
     @values.each do |v|
+      next if v == 0      
+      
       if temp_array.include? v.value
         
         return false
@@ -119,22 +132,68 @@ describe SudokuBoard do
       @game.boxes.length.should == 9
     end
     
-    it "should properly initialize" do      
-      master_array = []
-      (0..8).each do |x|
-        setup_array = []
-        (0..8).each do |n|
-          setup_array << (n + 1)
+    context "populate cells, rows, columns, and boxes" do
+      before :each do
+        @master_array = []
+        (0..8).each do |x|
+          setup_array = []
+          (0..8).each do |n|
+            setup_array << (n + 1)
+          end
+          @master_array << setup_array          
         end
-        master_array << setup_array
+        @game.setup(@master_array)
       end
       
-      @game.setup(master_array)
-      (0..8).each do |row|
-        (0..8).each do |col|
-          @game.cells[row  * 9 + col].value.should == col + 1
+      it "should properly initialize the cells array" do                   
+        (0..8).each do |row|
+          (0..8).each do |col|
+            @game.cells[row  * 9 + col].value.should == col + 1
+          end
         end
       end
+      
+      it "should properly intialize the rows objects" do       
+        @game.rows.each do |r|
+          r.values.each_with_index do |cell, idx|
+            cell.value.should == idx + 1
+          end
+        end
+      end
+      
+      it "should properly intialize the cols objects" do        
+        (0..8).each do |n|
+          @game.columns[n].values.each do |col|
+            col.value.should == n + 1
+          end
+        end
+      end
+      
+      it "should properly initialize the box objects" do  
+        @game.clear
+                      
+        (0..2).each do |col|          
+          (0..2).each do |row|
+            box_number = row * 3 + col            
+            top = (3 * col) + (27 * row)
+            middle = 9 + top
+            bottom = 18 + top
+            
+            (0..2).each do |n|
+              @game.cells[top + n].value = box_number + 1
+              @game.cells[middle + n].value = box_number + 1
+              @game.cells[bottom + n].value = box_number + 1
+            end
+          end          
+        end
+        
+        (0..8).each do |b|
+          (0..8).each do |c|
+            @game.boxes[b].values[c].value.should == b + 1
+          end
+        end
+      end
+      
     end
   end
   
