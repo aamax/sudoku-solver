@@ -489,6 +489,63 @@ describe SudokuBoard do
           b.valid?.should == false if idx == 1
         end      
       end
+
+      it "should be invalid if dupes in column 6 for column 6 and box 2. row all valid" do
+        @master_array[0][6] = 9
+        @master_array[1][6] = 9
+      
+        @game.setup(@master_array)
+      
+        @game.columns.each_with_index do |c, idx|
+          c.valid?.should == true unless idx == 6
+          c.valid?.should == false if idx == 6
+        end
+        @game.rows.each_with_index do |r, idx|
+          r.valid?.should == true 
+        end
+        @game.boxes.each_with_index do |b, idx|
+          b.valid?.should == true unless idx == 2
+          b.valid?.should == false if idx == 2
+        end      
+      end
+      
+      it "should be invalid if dupes in column 7 for column 7 and box 2. row all valid" do
+        @master_array[0][7] = 9
+        @master_array[1][7] = 9
+      
+        @game.setup(@master_array)
+      
+        @game.columns.each_with_index do |c, idx|
+          c.valid?.should == true unless idx == 7
+          c.valid?.should == false if idx == 7
+        end
+        @game.rows.each_with_index do |r, idx|
+          r.valid?.should == true 
+        end
+        @game.boxes.each_with_index do |b, idx|
+          b.valid?.should == true unless idx == 2
+          b.valid?.should == false if idx == 2
+        end      
+      end
+      
+      it "should be invalid if dupes in column 8 for column 8 and box 2. row all valid" do
+        @master_array[0][8] = 9
+        @master_array[1][8] = 9
+      
+        @game.setup(@master_array)
+      
+        @game.columns.each_with_index do |c, idx|
+          c.valid?.should == true unless idx == 8
+          c.valid?.should == false if idx == 8
+        end
+        @game.rows.each_with_index do |r, idx|
+          r.valid?.should == true 
+        end
+        @game.boxes.each_with_index do |b, idx|
+          b.valid?.should == true unless idx == 2
+          b.valid?.should == false if idx == 2
+        end      
+      end
       
     end
   end
