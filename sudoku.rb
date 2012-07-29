@@ -5,9 +5,15 @@ class SudokuBoard
   
   def initialize
     @cells = []
-    @rows = [SudokuSet.new]    
-    @boxes = [SudokuSet.new]
-    @columns = [SudokuSet.new]
+    @rows = []
+    @columns = []
+    @boxes = []
+    (1..9).each do 
+      @rows << SudokuSet.new
+      @columns << SudokuSet.new
+      @boxes << SudokuSet.new
+    end
+      
     row_idx = 0
     col_idx = 0
     box_idx = 0
@@ -17,31 +23,36 @@ class SudokuBoard
       @cells << new_cell
       
       if @rows[row_idx].length == 9
-        @rows << SudokuSet.new
-        row_idx += 1        
+        row_idx += 1 
+        col_idx = 0       
       end
       @rows[row_idx].add new_cell
-      
-      if @columns[col_idx].length == 9
-        @columns << SudokuSet.new
-        col_idx += 1        
-      end
       @columns[col_idx].add new_cell
       
-      if @boxes[box_idx].length == 9
-        @boxes << SudokuSet.new
-        box_idx += 1        
-      end
-      @boxes[box_idx].add new_cell
-    end    
+      col_idx += 1
+    end
+    
+    # @boxes.each_with_index |b, idx|
+    #       b_idx = 0
+    #       (0..2).each do |n|
+    #         b[b_idx] = @rows[n].values[n]
+    #       end
+    #     end    
   end
   
   def setup(setup_array)
+    
+    binding.pry
+    
+    
     (0..8).each do |n|
       (0..8).each do |c|
         @cells[n * 9 + c].value = setup_array[n][c]
       end
     end
+    
+    binding.pry
+    
   end
 end
 
