@@ -148,6 +148,17 @@ class SudokuBoard
     end
     true
   end
+  
+  def display
+    puts ""
+    @rows.each do |r|
+      str = "|"
+      r.values.each do |c|
+        str += c.value.to_s + "|"
+      end
+      puts str
+    end
+  end
 end
 
 class Cell
@@ -1153,25 +1164,35 @@ describe SudokuBoard do
         @game.solved?.should == true
     end
     
-    # it "should solve the puzzle if only the top row has unset values" do
-    #   setup_array = [
-    #     [0,0,0,0,0,0,0,0,0],
-    #     [1,2,3,4,5,6,7,8,9],
-    #     [1,2,3,4,5,6,7,8,9],
-    #     [1,2,3,4,5,6,7,8,9],
-    #     [1,2,3,4,5,6,7,8,9],
-    #     [1,2,3,4,5,6,7,8,9],
-    #     [1,2,3,4,5,6,7,8,9],
-    #     [1,2,3,4,5,6,7,8,9],
-    #     [1,2,3,4,5,6,7,8,9]
-    #     ]
-    #     
-    #     @game.setup(setup_array)
-    #     @game.update_values 
-    #     @game.process_possibilities
-    #     @game.number_cells_changed.should == 9
-    #     @game.cells[0].value.should == 9
-    #     @game.solved?.should == true
-    # end    
+    it "should solve the puzzle if only the top row has unset values" do
+      setup_array = [
+                      [0,0,0,0,0,0,0,0,0],
+                      [9,7,4,5,3,6,8,2,1],
+                      [1,5,8,7,2,9,4,6,3],
+                      [2,4,5,1,9,8,7,3,6],
+                      [7,3,1,4,6,5,2,9,8],
+                      [8,6,9,3,7,2,1,5,4],
+                      [5,8,2,9,4,3,6,1,7],
+                      [4,1,6,2,5,7,3,8,9],
+                      [3,9,7,6,8,1,5,4,2]
+                    ]
+        
+        @game.setup(setup_array)
+        @game.update_values 
+        @game.process_possibilities
+        
+        @game.cells[0].value.should == 6
+        @game.cells[1].value.should == 2
+        @game.cells[2].value.should == 3
+        @game.cells[3].value.should == 8
+        @game.cells[4].value.should == 1
+        @game.cells[5].value.should == 4
+        @game.cells[6].value.should == 9
+        @game.cells[7].value.should == 7
+        @game.cells[8].value.should == 5
+        
+        @game.number_cells_changed.should == 9
+        @game.solved?.should == true
+    end    
   end
 end
