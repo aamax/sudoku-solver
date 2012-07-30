@@ -1,13 +1,14 @@
 require 'pry'
 
 class SudokuBoard
-  attr_accessor :cells, :rows, :columns, :boxes
+  attr_accessor :cells, :rows, :columns, :boxes, :number_cells_changed
   
   def initialize
     @cells = []
     @rows = []
     @columns = []
     @boxes = []
+    @number_cells_changed = 0
     (1..9).each do 
       @rows << SudokuSet.new
       @columns << SudokuSet.new
@@ -64,13 +65,13 @@ class SudokuBoard
       end
     end
   end
-
+  
   def clear
     @cells.each do |c|
       c.value = 0
     end
   end
-
+  
   def valid?
     @rows.each do |r|
       unless r.valid?
@@ -96,26 +97,70 @@ class SudokuBoard
     # iterate all cells
     @cells.each do |c|
       # clear possibles for cell
-      
-      # test row
-      # test column
-      # test box
+      c.possible_list.clear
+      if c.value == 0
+        (1..9).each do |n|
+          found = false
+          
+          c.row.values.each do |v|
+            if v.value ==  n
+              found = true
+              break
+            end
+          end
+          
+          c.column.values.each do |v|
+            if v.value == n
+              found = true
+              break
+            end
+          end
+          
+          c.box.values.each do |v|
+            if v.value == n
+              found = true
+              break
+            end
+          end
+          if !found
+            c.possible_list << n
+          end          
+        end
+      end
     end
+  end
+  
+  def process_possibilities
+    @number_cells_changed = 0
+    @cells.each do |c|
+      if c.possible_list.length == 1
+        @number_cells_changed += 1
+        c.value = c.possible_list[0]
+      end
+    end
+  end
+  
+  def solved?
+    @cells.each do |c|
+      if c.value == 0
+        return false
+      end
+    end
+    true
   end
 end
 
 class Cell
-  attr_accessor :value, :possibles, :row, :box, :column
+  attr_accessor :value, :row, :box, :column, :possible_list
   
-  def initialize(value)
+  def initialize(value)  
     @value = value
-    @possibles = []
-    @roll = nil
-    @column = nil
+    @possible_list = []
+    @row = nil
     @box = nil
+    @column = nil    
   end
-  
-  
+
 end
 
 class SudokuSet
@@ -211,14 +256,14 @@ describe SudokuBoard do
       
       it "should properly initialize the box objects" do  
         @game.clear
-
+  
         (0..2).each do |col|          
           (0..2).each do |row|
             box_number = row * 3 + col            
             top = (3 * col) + (27 * row)
             middle = 9 + top
             bottom = 18 + top
-
+  
             (0..2).each do |n|
               @game.cells[top + n].value = box_number + 1
               @game.cells[middle + n].value = box_number + 1
@@ -226,7 +271,7 @@ describe SudokuBoard do
             end
           end          
         end
-
+  
         (0..8).each do |b|
           (0..8).each do |c|
             @game.boxes[b].values[c].value.should == b + 1
@@ -573,7 +618,7 @@ describe SudokuBoard do
           end 
           @game.valid?.should == false       
         end
-
+  
         it "should be invalid if dupes in column 6 for column 6 and box 2. row all valid" do
           @master_array[0][6] = 9
           @master_array[1][6] = 9
@@ -634,7 +679,7 @@ describe SudokuBoard do
           @game.valid?.should == false      
         end
       end
-
+  
       context "boxes 3, 4, 5" do
         it "should be invalid if dupes in column 0 for column 0 and box 3. row all valid" do
           @master_array[3][0] = 9
@@ -755,7 +800,7 @@ describe SudokuBoard do
           end   
           @game.valid?.should == false     
         end
-
+  
         it "should be invalid if dupes in column 6 for column 6 and box 5. row all valid" do
           @master_array[3][6] = 9
           @master_array[4][6] = 9
@@ -937,7 +982,7 @@ describe SudokuBoard do
           end  
           @game.valid?.should == false      
         end
-
+  
         it "should be invalid if dupes in column 6 for column 6 and box 8. row all valid" do
           @master_array[8][6] = 9
           @master_array[7][6] = 9
@@ -998,18 +1043,135 @@ describe SudokuBoard do
           @game.valid?.should == false     
         end
       end
-
-    end
   
-    
+    end
   end
 
   context "solve the board" do
-    it "should show all possabilities for a cell with no neighbors" #do
-    #   @game.update_values
-    #   @game.cells.each do |c|
-    #     c.possables.should == [1,2,3,4,5,6,7,8,9]
-    #   end
-    # end
+    context "possibilities testing" do
+      it "should show all possabilities for a cell with no neighbors" do
+        @game.update_values
+        @game.cells.each do |c|
+          c.possible_list.should == [1,2,3,4,5,6,7,8,9]
+        end
+      end
+    
+      it "should show valid possibles for a cell with a single set value" do
+        (1..9).each do |n|
+          @game.cells[0].value = n
+          @game.update_values
+          result_list = [1,2,3,4,5,6,7,8,9].delete_if { |v| v == n }
+          @game.cells[1].possible_list.should == result_list
+        end
+      end
+      
+      it "should show valid possibilities for a row with one empty value" do
+        row = @game.rows[0]
+        (0..7).each do |n|
+          row.values[n].value = n + 1
+        end
+        
+        @game.update_values        
+        @game.rows[0].values[8].possible_list.should == [9]
+      end
+      
+      it "should show valid possibilities for a column with one empty value" do
+        col = @game.columns[0]
+        (0..7).each do |n|
+          col.values[n].value = n + 1
+        end
+        
+        @game.update_values        
+        @game.columns[0].values[8].possible_list.should == [9]
+      end
+      
+      it "should show valid possibilities for a box with one empty value" do
+        box = @game.boxes[0]
+        (0..7).each do |n|
+          box.values[n].value = n + 1
+        end
+        
+        @game.update_values        
+        @game.boxes[0].values[8].possible_list.should == [9]
+      end
+    
+      it "should set the value for cells that only have one possibility in a row" do
+        row = @game.rows[0]
+        (0..7).each do |n|
+          row.values[n].value = n + 1
+        end
+        
+        @game.update_values 
+        @game.process_possibilities       
+        @game.rows[0].values[8].value.should == 9
+        @game.number_cells_changed.should == 1
+      end
+      
+      it "should set the value for cells that only have one possibility in a column" do
+        column = @game.columns[0]
+        (0..7).each do |n|
+          column.values[n].value = n + 1
+        end
+        
+        @game.update_values 
+        @game.process_possibilities       
+        @game.columns[0].values[8].value.should == 9
+        @game.number_cells_changed.should == 1
+      end
+  
+      it "should set the value for cells that only have one possibility in a box" do
+        box = @game.boxes[0]
+        (0..7).each do |n|
+          box.values[n].value = n + 1
+        end
+        
+        @game.update_values 
+        @game.process_possibilities       
+        @game.boxes[0].values[8].value.should == 9
+        @game.number_cells_changed.should == 1
+      end
+    end  
+  
+    it "should solve the puzzle if there is only a single value to fill in" do
+      setup_array = [
+        [0,1,2,3,4,5,6,7,8],
+        [1,2,3,4,5,6,7,8,9],
+        [1,2,3,4,5,6,7,8,9],
+        [1,2,3,4,5,6,7,8,9],
+        [1,2,3,4,5,6,7,8,9],
+        [1,2,3,4,5,6,7,8,9],
+        [1,2,3,4,5,6,7,8,9],
+        [1,2,3,4,5,6,7,8,9],
+        [1,2,3,4,5,6,7,8,9]
+        ]
+        
+        @game.setup(setup_array)
+        @game.update_values 
+        @game.process_possibilities
+        @game.number_cells_changed.should == 1
+        @game.cells[0].value.should == 9
+        @game.solved?.should == true
+    end
+    
+    # it "should solve the puzzle if only the top row has unset values" do
+    #   setup_array = [
+    #     [0,0,0,0,0,0,0,0,0],
+    #     [1,2,3,4,5,6,7,8,9],
+    #     [1,2,3,4,5,6,7,8,9],
+    #     [1,2,3,4,5,6,7,8,9],
+    #     [1,2,3,4,5,6,7,8,9],
+    #     [1,2,3,4,5,6,7,8,9],
+    #     [1,2,3,4,5,6,7,8,9],
+    #     [1,2,3,4,5,6,7,8,9],
+    #     [1,2,3,4,5,6,7,8,9]
+    #     ]
+    #     
+    #     @game.setup(setup_array)
+    #     @game.update_values 
+    #     @game.process_possibilities
+    #     @game.number_cells_changed.should == 9
+    #     @game.cells[0].value.should == 9
+    #     @game.solved?.should == true
+    # end    
   end
 end
