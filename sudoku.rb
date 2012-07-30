@@ -161,18 +161,23 @@ class SudokuBoard
   end
 
   def solve_game
+    cells_changed = 0
     total_unset = 81
     number_unset = self.unset_count
     while number_unset > 0
       update_values 
       process_possibilities
+      cells_changed += @number_cells_changed
+      
       number_unset = self.unset_count
       if total_unset != number_unset
         total_unset = number_unset
       else
         break
       end
-    end    
+    end  
+    
+    @number_cells_changed = cells_changed  
     if total_unset > 0
       false
     else
@@ -1269,6 +1274,35 @@ describe SudokuBoard do
         @game.rows[1].values[7].value.should == 2
       
         @game.solved?.should == true
-      end          
+      end  
+      
+      it "should solve another game" do
+        setup_array = [
+                        [9,0,0,0,3,5,1,6,0],
+                        [5,3,0,0,0,0,0,9,0],
+                        [0,0,0,0,0,0,5,0,0],
+                        [8,7,0,0,0,6,0,0,2],
+                        [0,0,5,0,2,0,3,0,0],
+                        [2,0,0,8,0,0,0,1,5],
+                        [0,5,6,0,0,0,0,0,0],
+                        [0,4,0,0,0,0,0,7,0],
+                        [0,2,9,1,6,0,0,5,4]
+                      ]
+
+          @game.setup(setup_array)
+          val = @game.solve_game
+          @game.display
+          
+          bad_cells = 0
+          @game.cells.each do |c|
+            puts c.possible_list.inspect
+            bad_cells += 1 if c.value == 0
+          end
+          
+          puts "number cells changed: #{@game.number_cells_changed}"
+          puts "number bad cells: #{bad_cells}"
+          
+          val.should == true
+      end        
   end
 end
