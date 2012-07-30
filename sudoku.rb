@@ -169,8 +169,15 @@ class SudokuBoard
       number_unset = self.unset_count
       if total_unset != number_unset
         total_unset = number_unset
+      else
+        break
       end
     end    
+    if total_unset > 0
+      false
+    else
+      true
+    end
   end
   
   def unset_count
@@ -1241,7 +1248,7 @@ describe SudokuBoard do
                     ]
       
         @game.setup(setup_array)
-        @game.solve_game
+        @game.solve_game.should == true
       
         @game.cells[0].value.should == 6
         @game.cells[1].value.should == 2
