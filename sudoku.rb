@@ -159,6 +159,29 @@ class SudokuBoard
       puts str
     end
   end
+
+  def solve_game
+    total_unset = 81
+    number_unset = self.unset_count
+    while number_unset > 0
+      update_values 
+      process_possibilities
+      number_unset = self.unset_count
+      if total_unset != number_unset
+        total_unset = number_unset
+      end
+    end    
+  end
+  
+  def unset_count
+    count = 0
+    @cells.each do |c|
+      if c.value == 0
+        count += 1
+      end
+    end
+    count
+  end
 end
 
 class Cell
@@ -1164,20 +1187,22 @@ describe SudokuBoard do
         @game.solved?.should == true
     end
     
-    it "should solve the puzzle if only the top row has unset values" do
+    it "should solve the puzzle if it can resolve in 2 passes" do
       setup_array = [
                       [0,0,0,0,0,0,0,0,0],
-                      [9,7,4,5,3,6,8,2,1],
-                      [1,5,8,7,2,9,4,6,3],
-                      [2,4,5,1,9,8,7,3,6],
-                      [7,3,1,4,6,5,2,9,8],
-                      [8,6,9,3,7,2,1,5,4],
-                      [5,8,2,9,4,3,6,1,7],
-                      [4,1,6,2,5,7,3,8,9],
-                      [3,9,7,6,8,1,5,4,2]
+                      [9,7,4,5,3,6,8,0,1],
+                      [1,5,8,7,2,9,0,6,3],
+                      [2,4,5,1,9,0,7,3,6],
+                      [7,3,1,4,0,5,2,9,8],
+                      [8,6,9,0,7,2,1,5,4],
+                      [5,8,0,9,4,3,6,1,7],
+                      [4,0,6,2,5,7,3,8,9],
+                      [0,9,7,6,8,1,5,4,2]
                     ]
         
         @game.setup(setup_array)
+        @game.update_values 
+        @game.process_possibilities
         @game.update_values 
         @game.process_possibilities
         
@@ -1190,9 +1215,53 @@ describe SudokuBoard do
         @game.cells[6].value.should == 9
         @game.cells[7].value.should == 7
         @game.cells[8].value.should == 5
+        @game.rows[8].values[0].value.should == 3
+        @game.rows[7].values[1].value.should == 1
+        @game.rows[6].values[2].value.should == 2
+        @game.rows[5].values[3].value.should == 3
+        @game.rows[4].values[4].value.should == 6
+        @game.rows[3].values[5].value.should == 8
+        @game.rows[2].values[6].value.should == 4
+        @game.rows[1].values[7].value.should == 2
         
-        @game.number_cells_changed.should == 9
         @game.solved?.should == true
-    end    
+    end  
+    
+    it "should solve the game if it can do it by resolving in 2 passes" do
+      setup_array = [
+                      [0,0,0,0,0,0,0,0,0],
+                      [9,7,4,5,3,6,8,0,1],
+                      [1,5,8,7,2,9,0,6,3],
+                      [2,4,5,1,9,0,7,3,6],
+                      [7,3,1,4,0,5,2,9,8],
+                      [8,6,9,0,7,2,1,5,4],
+                      [5,8,0,9,4,3,6,1,7],
+                      [4,0,6,2,5,7,3,8,9],
+                      [0,9,7,6,8,1,5,4,2]
+                    ]
+      
+        @game.setup(setup_array)
+        @game.solve_game
+      
+        @game.cells[0].value.should == 6
+        @game.cells[1].value.should == 2
+        @game.cells[2].value.should == 3
+        @game.cells[3].value.should == 8
+        @game.cells[4].value.should == 1
+        @game.cells[5].value.should == 4
+        @game.cells[6].value.should == 9
+        @game.cells[7].value.should == 7
+        @game.cells[8].value.should == 5
+        @game.rows[8].values[0].value.should == 3
+        @game.rows[7].values[1].value.should == 1
+        @game.rows[6].values[2].value.should == 2
+        @game.rows[5].values[3].value.should == 3
+        @game.rows[4].values[4].value.should == 6
+        @game.rows[3].values[5].value.should == 8
+        @game.rows[2].values[6].value.should == 4
+        @game.rows[1].values[7].value.should == 2
+      
+        @game.solved?.should == true
+      end          
   end
 end
