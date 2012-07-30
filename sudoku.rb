@@ -97,35 +97,39 @@ class SudokuBoard
     # iterate all cells
     @cells.each do |c|
       # clear possibles for cell
-      c.possible_list.clear
-      if c.value == 0
-        (1..9).each do |n|
-          found = false
-          
-          c.row.values.each do |v|
-            if v.value ==  n
-              found = true
-              break
-            end
+      set_possibles_for_cell(c)
+    end
+  end
+  
+  def set_possibles_for_cell(c)
+    c.possible_list.clear
+    if c.value == 0
+      (1..9).each do |n|
+        found = false
+        
+        c.row.values.each do |v|
+          if v.value ==  n
+            found = true
+            break
           end
-          
-          c.column.values.each do |v|
-            if v.value == n
-              found = true
-              break
-            end
-          end
-          
-          c.box.values.each do |v|
-            if v.value == n
-              found = true
-              break
-            end
-          end
-          if !found
-            c.possible_list << n
-          end          
         end
+        
+        c.column.values.each do |v|
+          if v.value == n
+            found = true
+            break
+          end
+        end
+        
+        c.box.values.each do |v|
+          if v.value == n
+            found = true
+            break
+          end
+        end
+        if !found
+          c.possible_list << n
+        end          
       end
     end
   end
@@ -179,10 +183,29 @@ class SudokuBoard
     
     @number_cells_changed = cells_changed  
     if total_unset > 0
-      false
+      brut_force_solver
     else
       true
     end
+  end
+  
+  def brut_force_solver
+    @cells.each do |c|
+      next if c.value != 0
+      
+      set_possibles_for_cell(c)
+      c.possible_list.each do |v|
+        c.value = v
+        found_all = brut_force_solver
+        if (found_all  == true)
+          return true
+        end
+      end
+      
+      c.value = 0
+      return false
+    end
+    true
   end
   
   def unset_count
@@ -1200,8 +1223,7 @@ describe SudokuBoard do
     end
     
     it "should solve the puzzle if it can resolve in 2 passes" do
-      setup_array = [
-                      [0,0,0,0,0,0,0,0,0],
+      setup_array = [[0,0,0,0,0,0,0,0,0],
                       [9,7,4,5,3,6,8,0,1],
                       [1,5,8,7,2,9,0,6,3],
                       [2,4,5,1,9,0,7,3,6],
@@ -1209,8 +1231,7 @@ describe SudokuBoard do
                       [8,6,9,0,7,2,1,5,4],
                       [5,8,0,9,4,3,6,1,7],
                       [4,0,6,2,5,7,3,8,9],
-                      [0,9,7,6,8,1,5,4,2]
-                    ]
+                      [0,9,7,6,8,1,5,4,2]]
         
         @game.setup(setup_array)
         @game.update_values 
@@ -1240,8 +1261,7 @@ describe SudokuBoard do
     end  
     
     it "should solve the game if it can do it by resolving in 2 passes" do
-      setup_array = [
-                      [0,0,0,0,0,0,0,0,0],
+      setup_array = [[0,0,0,0,0,0,0,0,0],
                       [9,7,4,5,3,6,8,0,1],
                       [1,5,8,7,2,9,0,6,3],
                       [2,4,5,1,9,0,7,3,6],
@@ -1249,8 +1269,7 @@ describe SudokuBoard do
                       [8,6,9,0,7,2,1,5,4],
                       [5,8,0,9,4,3,6,1,7],
                       [4,0,6,2,5,7,3,8,9],
-                      [0,9,7,6,8,1,5,4,2]
-                    ]
+                      [0,9,7,6,8,1,5,4,2]]
       
         @game.setup(setup_array)
         @game.solve_game.should == true
@@ -1277,8 +1296,7 @@ describe SudokuBoard do
       end  
       
       it "should solve another game" do
-        setup_array = [
-                        [9,0,0,0,3,5,1,6,0],
+        setup_array =  [[9,0,0,0,3,5,1,6,0],
                         [5,3,0,0,0,0,0,9,0],
                         [0,0,0,0,0,0,5,0,0],
                         [8,7,0,0,0,6,0,0,2],
@@ -1286,23 +1304,28 @@ describe SudokuBoard do
                         [2,0,0,8,0,0,0,1,5],
                         [0,5,6,0,0,0,0,0,0],
                         [0,4,0,0,0,0,0,7,0],
-                        [0,2,9,1,6,0,0,5,4]
-                      ]
+                        [0,2,9,1,6,0,0,5,4]]
 
           @game.setup(setup_array)
           val = @game.solve_game
-          @game.display
-          
-          bad_cells = 0
-          @game.cells.each do |c|
-            puts c.possible_list.inspect
-            bad_cells += 1 if c.value == 0
-          end
-          
-          puts "number cells changed: #{@game.number_cells_changed}"
-          puts "number bad cells: #{bad_cells}"
-          
+          val.should == true
+      end     
+      
+      it "should solve a simple game" do
+        setup_array =  [[0,0,0,0,0,9,7,6,0],
+                        [0,7,0,4,0,0,1,2,0],
+                        [0,0,4,0,0,0,0,0,0],
+                        [0,2,7,3,6,0,8,9,0],
+                        [0,0,0,2,0,7,0,0,0],
+                        [0,4,3,0,9,5,2,1,0],
+                        [0,0,0,0,0,0,5,0,0],
+                        [0,6,5,0,0,3,0,4,0],
+                        [0,3,9,7,0,0,0,0,0]]
+
+          @game.setup(setup_array)
+          val = @game.solve_game
           val.should == true
       end        
+         
   end
 end
